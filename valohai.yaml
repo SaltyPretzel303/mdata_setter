@@ -5,6 +5,9 @@
     image: py-requests
     command: 
       # - pip install requests
+      - if [ {parameter-value:override_filter} == "true" ]; then echo {parameter-value:override_filter} > filter.py; fi
+      - if [ {parameter-value:override_generator} == "true" ]; then echo {parameter-value:override_generator} > gen_mdata.py; fi
+
       - python updater.py
     inputs: 
       - name: input_one
@@ -17,3 +20,45 @@
           - s3://nemanjas-bucket/data/01KBN/01KBN68TNFKVVSJ86NW6BPB7Q8/output-16/data/*
           - datum://019b4fb5-6f17-e3d9-c3d5-0f0c2fc149c7
           - datum://019adfb4-a454-0333-f040-b641b42717d1
+
+    parameters: 
+      - name: override_filter
+        type: flag
+        default: false
+        pass-true-as: --override-filter=true
+        pass-false-as: --override-filter=false
+        description: |
+          Check if you would like to apply filter from `filter` paramater.  
+          If left unchecked, filter defined in `filter.py` will be used. 
+
+      - name: filter
+        type: string
+        default: |
+          def filter(datum):
+            # this filter will "accept" all selected inputs
+            return True
+        description: |
+          Here you can define a filter to use on the selected files, by defining the body of `filter` method.  
+          Objects passed as `datum` parameter has next properties:
+          - raw - dictionary representation of corresponding file descripion read from /valohai/config/input.json 
+          - name - file name
+          - id - datum id, in case this file is actually a datum - otherwise `None`. Files that do not have datums are the ones specified by a link (either to s3 bucket, wildcard on s3 bucket or any other http/https link).
+          - mdata - dictionary contining already assigned metadata. These will include properties that define dataset memberships as well. 
+      
+      - name: override_generator
+        type: flag 
+        default: false
+        pass-true-as: --override-generator=true
+        pass-false-as: --override-generator=false
+        description: |
+          Check if you would like to use method from `generator` paramater to generate metadata for each datum.  
+          If left unchecked, `gen_mdata` method defined in `gen_mdata.py` will be sued instead.
+
+      - name: generator
+        type: string
+        default: |
+          def gen_mdata(datum):
+            return {"d_id": datum.id}
+        description: |
+          Here you can define the metadata that will be associated with the passed datum. 
+          Checkout the description of `filter` paramtere for available properties of passed `datum` object.

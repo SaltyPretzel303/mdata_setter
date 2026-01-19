@@ -65,7 +65,7 @@ def resolve_gen_mdata() -> Callable[[Datum], dict[str, any]|None]:
 
     return lambda x: None
 
-def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict[str, any]], token: str, host: str):
+def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict[str, any]|None], token: str, host: str):
     metadata = {}
     for datum in datums: 
         print("resoling mdata for: ", datum)
@@ -87,6 +87,9 @@ def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict[st
     except Exception as e:
         print("Exception while applying metadata: ", e)    
         exit_with(f"Failed to apply metadata")
+        return 
+        # exit will close the app, return is here just so that the next if don't complain 
+        # about res being unbound
 
     if not res.ok:
         txt = res.text or "Unknown reason"
