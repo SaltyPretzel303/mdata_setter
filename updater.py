@@ -1,6 +1,4 @@
-from dataclasses import dataclass
-from os import _exit as exit, path
-from os import getenv
+from os import _exit as exit, path, getenv
 import json
 from typing import Callable
 from requests import post
@@ -10,7 +8,7 @@ FILTER_FILE = "filter.py"
 MDATA_GEN_FILE = "gen_mdata.py"
 TOKEN_ENV_VAR = "VH_TOKEN"
 DATUMS_PER_REQUEST = 1000
-HOST = "http://mayhai.com"
+HOST = "https://stagign.valohai.com"
 
 def exit_with(msg, code=1): 
     print(f"Exiting because: {msg}.")
@@ -18,7 +16,7 @@ def exit_with(msg, code=1):
     exit(code)
 
 class Datum: 
-    def __init__(self, raw: dict[str, any], input: str):
+    def __init__(self, raw: dict, input: str):
         self.raw = raw
         self.from_input = input
 
@@ -71,7 +69,6 @@ def iter_slice(arr, width):
         yield arr[i:i+width]
 
 def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict|None], token: str, host: str):
-    
     for datum_slice in iter_slice(datums, DATUMS_PER_REQUEST): 
         metadata = {}
 
@@ -84,7 +81,8 @@ def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict|No
             exit_with("No metadata resolved - nothing to apply!")
 
         header = {"Authorization": f"Token {token}"}
-
+        print("applying")
+        print(metadata)
         try:
             res = post(get_apply_url(host), headers=header, json={"datum_metadata": metadata})
             print(f"{len(metadata)} metadata applied")
@@ -118,6 +116,6 @@ if __name__ == "__main__":
         print(d.name)
 
     gen_mdata = resolve_gen_mdata()
-    apply_metadata(datums, gen_mdata, token, "http://192.168.1.8")
+    apply_metadata(datums, gen_mdata, token, HOST)
 
     print("Leaving.")
