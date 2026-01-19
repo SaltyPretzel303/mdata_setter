@@ -1,0 +1,19 @@
+- step: 
+    name: metadata-updater
+    environment: ec2-instance
+    # image: python:3.10
+    image: py-requests
+    command: 
+      # - pip install requests
+      - python updater.py
+    inputs: 
+      - name: input_one
+        keep-directories: full
+        optional: true 
+        download: on-demand
+        default: 
+          - datum://019b92be-9cf6-86be-9d28-89f1a825d3eb
+          - datum://019b8ee4-8aaa-a6d7-b987-d8199305d1d6
+          - s3://nemanjas-bucket/data/01KBN/01KBN68TNFKVVSJ86NW6BPB7Q8/output-16/data/*
+          - datum://019b4fb5-6f17-e3d9-c3d5-0f0c2fc149c7
+          - datum://019adfb4-a454-0333-f040-b641b42717d1
