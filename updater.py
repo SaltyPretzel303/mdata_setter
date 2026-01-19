@@ -8,7 +8,7 @@ FILTER_FILE = "filter.py"
 MDATA_GEN_FILE = "gen_mdata.py"
 TOKEN_ENV_VAR = "VH_TOKEN"
 DATUMS_PER_REQUEST = 1000
-HOST = "https://staging.valohai.com"
+HOST = "https://app.valohai.com"
 
 def exit_with(msg, code=1): 
     print(f"Exiting because: {msg}.")
@@ -110,9 +110,6 @@ if __name__ == "__main__":
         
     datum_filter = resolve_filter()
     datums = resolve_datums(datum_filter)
-    print("Resolved datums")
-    for d in datums: 
-        print(d.name)
 
     gen_mdata = resolve_gen_mdata()
     apply_metadata(datums, gen_mdata, token, HOST)
