@@ -9,6 +9,7 @@ INPUTS_CONFIG_PATH = "/valohai/config/inputs.json"
 FILTER_FILE = "filter.py"
 MDATA_GEN_FILE = "gen_mdata.py"
 TOKEN_ENV_VAR = "VH_TOKEN"
+DATUMS_PER_REQUEST = 1000
 HOST = "http://mayhai.com"
 
 def exit_with(msg, code=1): 
@@ -33,7 +34,7 @@ class Datum:
     def mdata(self): 
         return self.raw.get("metadata", None)
 
-def resolve_filter() -> Callable[[dict[str, any]], bool]:
+def resolve_filter() -> Callable[[dict], bool]:
     if path.exists(FILTER_FILE):
         from filter import filter
 
@@ -42,7 +43,7 @@ def resolve_filter() -> Callable[[dict[str, any]], bool]:
     print("No filter provided, will process all datums.")
     return lambda x: True
 
-def resolve_datums(filter: Callable[[dict[str, any]], bool]) -> list[Datum]:
+def resolve_datums(filter: Callable[[dict], bool]) -> list[Datum]:
     if not path.exists(INPUTS_CONFIG_PATH):
         exit_with(f"Missing: {INPUTS_CONFIG_PATH}")
 
@@ -58,42 +59,44 @@ def resolve_datums(filter: Callable[[dict[str, any]], bool]) -> list[Datum]:
 
     return datums
 
-def resolve_gen_mdata() -> Callable[[Datum], dict[str, any]|None]:
+def resolve_gen_mdata() -> Callable[[Datum], dict|None]:
     if path.exists(MDATA_GEN_FILE):
         from gen_mdata import gen_mdata
         return gen_mdata
 
     return lambda x: None
 
-def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict[str, any]|None], token: str, host: str):
-    metadata = {}
-    for datum in datums: 
-        print("resoling mdata for: ", datum)
-        if new_metadata := resolve_mdata(datum):
-            metadata[datum.id] = new_metadata
+def iter_slice(arr, width): 
+    for i in range(0, len(arr), width): 
+        yield arr[i:i+width]
 
-    if not metadata: 
-        exit_with("No metadata resolved - nothing to apply!")
+def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict|None], token: str, host: str):
+    
+    for datum_slice in iter_slice(datums, DATUMS_PER_REQUEST): 
+        metadata = {}
 
-    print("Resolved metadata")
-    for item in metadata.items():
-        print(item)
+        for datum in datum_slice: 
+            # if new_metadata := resolve_mdata(datum):
+            #     metadata[datum.id] = new_metadata
+            metadata[datum.id] = resolve_mdata(datum)
 
-    header = {"Authorization": f"Token {token}"}
+        if not metadata: 
+            exit_with("No metadata resolved - nothing to apply!")
 
-    try:
-        res = post(get_apply_url(host), headers=header, json={"datum_metadata": metadata})
-        print("Metadata applied!")
-    except Exception as e:
-        print("Exception while applying metadata: ", e)    
-        exit_with(f"Failed to apply metadata")
-        return 
-        # exit will close the app, return is here just so that the next if don't complain 
-        # about res being unbound
+        header = {"Authorization": f"Token {token}"}
 
-    if not res.ok:
-        txt = res.text or "Unknown reason"
-        exit_with(f"Failed to apply metadata: {txt}")
+        try:
+            res = post(get_apply_url(host), headers=header, json={"datum_metadata": metadata})
+            print(f"{len(metadata)} metadata applied")
+        except Exception as e:
+            exit_with(f"Exception while applying metadata: {e}")
+            return 
+            # exit will close the app, return is here just so that the next if don't complain 
+            # about res being unbound
+
+        if not res.ok:
+            txt = res.text or "Unknown reason"
+            exit_with(f"Failed to apply metadata: {txt}")
 
 def get_token() -> str | None:
     return getenv(TOKEN_ENV_VAR)
@@ -101,14 +104,13 @@ def get_token() -> str | None:
 def get_apply_url(host: str) -> str:
     return f"{host}/api/v0/data/metadata/apply/"
 
-
 if __name__ == "__main__": 
     print("Will add some metadata ...")
 
     token = get_token()
     if not token: 
         exit_with(f"Failed to read token from {TOKEN_ENV_VAR} env. variable")
-
+        
     datum_filter = resolve_filter()
     datums = resolve_datums(datum_filter)
     print("Resolved datums")

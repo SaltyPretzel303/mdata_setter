@@ -5,12 +5,15 @@
     image: py-requests
     command: 
       # - pip install requests
-      - if [ {parameter-value:override_filter} == "true" ]; then echo {parameter-value:override_filter} > filter.py; fi
-      - if [ {parameter-value:override_generator} == "true" ]; then echo {parameter-value:override_generator} > gen_mdata.py; fi
+      - if [ {parameter-value:override_filter} == "True" ]; then echo "overriding filter"; echo {parameter-value:filter} > filter.py; fi
+      - if [ {parameter-value:override_generator} == "True" ]; then echo "overriding gen"; echo {parameter-value:generator} > gen_mdata.py; fi
+      - cat filter.py
+      - cat gen_mdata.py
 
+      - exit 1
       - python updater.py
     inputs: 
-      - name: input_one
+      - name: main_input
         keep-directories: full
         optional: true 
         download: on-demand
@@ -36,14 +39,14 @@
         default: |
           def filter(datum):
             # this filter will "accept" all selected inputs
-            return True
+            return False
         description: |
           Here you can define a filter to use on the selected files, by defining the body of `filter` method.  
-          Objects passed as `datum` parameter has next properties:
-          - raw - dictionary representation of corresponding file descripion read from /valohai/config/input.json 
-          - name - file name
-          - id - datum id, in case this file is actually a datum - otherwise `None`. Files that do not have datums are the ones specified by a link (either to s3 bucket, wildcard on s3 bucket or any other http/https link).
-          - mdata - dictionary contining already assigned metadata. These will include properties that define dataset memberships as well. 
+          Object passed as `datum` parameter has next properties:
+          - `raw` - dictionary representation of corresponding file descripion read from /valohai/config/input.json 
+          - `name` - file name
+          - `id` - datum id, in case this file is actually a datum - otherwise `None`. Files that do not have datums are the ones specified by a link (either to s3 bucket, wildcard on s3 bucket or any other http/https link).
+          - `mdata` - dictionary containing already assigned metadata. These will include properties that define dataset memberships as well. 
       
       - name: override_generator
         type: flag 
@@ -52,12 +55,13 @@
         pass-false-as: --override-generator=false
         description: |
           Check if you would like to use method from `generator` paramater to generate metadata for each datum.  
-          If left unchecked, `gen_mdata` method defined in `gen_mdata.py` will be sued instead.
+          If left unchecked, `gen_mdata` method defined in `gen_mdata.py` will be used instead.
 
       - name: generator
         type: string
         default: |
           def gen_mdata(datum):
+            # comment from param ?
             return {"d_id": datum.id}
         description: |
           Here you can define the metadata that will be associated with the passed datum. 
