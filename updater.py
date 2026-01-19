@@ -8,7 +8,7 @@ FILTER_FILE = "filter.py"
 MDATA_GEN_FILE = "gen_mdata.py"
 TOKEN_ENV_VAR = "VH_TOKEN"
 DATUMS_PER_REQUEST = 1000
-HOST = "https://stagign.valohai.com"
+HOST = "https://staging.valohai.com"
 
 def exit_with(msg, code=1): 
     print(f"Exiting because: {msg}.")
@@ -69,6 +69,7 @@ def iter_slice(arr, width):
         yield arr[i:i+width]
 
 def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict|None], token: str, host: str):
+
     for datum_slice in iter_slice(datums, DATUMS_PER_REQUEST): 
         metadata = {}
 
@@ -81,8 +82,6 @@ def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict|No
             exit_with("No metadata resolved - nothing to apply!")
 
         header = {"Authorization": f"Token {token}"}
-        print("applying")
-        print(metadata)
         try:
             res = post(get_apply_url(host), headers=header, json={"datum_metadata": metadata})
             print(f"{len(metadata)} metadata applied")
