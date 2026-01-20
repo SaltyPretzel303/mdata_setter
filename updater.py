@@ -76,10 +76,9 @@ def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict|No
         for datum in datum_slice: 
             if new_metadata := resolve_mdata(datum):
                 metadata[datum.id] = new_metadata
-            # metadata[datum.id] = resolve_mdata(datum)
 
         if not metadata: 
-            exit_with("No metadata resolved - nothing to apply!")
+            continue
 
         header = {"Authorization": f"Token {token}"}
         try:
@@ -94,6 +93,7 @@ def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict|No
         if not res.ok:
             txt = res.text or "Unknown reason"
             exit_with(f"Failed to apply metadata: {txt}")
+            # An improvement would be to log failures to a file so that those can be tracked as well 
 
 def get_token() -> str | None:
     return getenv(TOKEN_ENV_VAR)
