@@ -69,13 +69,11 @@ def iter_slice(arr, width):
         yield arr[i:i+width]
 
 def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict|None], token: str, host: str):
-
     for datum_slice in iter_slice(datums, DATUMS_PER_REQUEST): 
         metadata = {}
 
         for datum in datum_slice: 
-            if new_metadata := resolve_mdata(datum):
-                metadata[datum.id] = new_metadata
+            metadata[datum.id] = resolve_mdata(datum)
 
         if not metadata: 
             continue
