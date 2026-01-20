@@ -8,7 +8,7 @@ FILTER_FILE = "filter.py"
 MDATA_GEN_FILE = "gen_mdata.py"
 TOKEN_ENV_VAR = "VH_TOKEN"
 DATUMS_PER_REQUEST = 1000
-HOST = "https://app.valohai.com"
+HOST = "https://staging.valohai.com"
 
 def exit_with(msg, code=1): 
     print(f"Exiting because: {msg}.")
@@ -74,9 +74,9 @@ def apply_metadata(datums: list[Datum], resolve_mdata: Callable[[Datum], dict|No
         metadata = {}
 
         for datum in datum_slice: 
-            # if new_metadata := resolve_mdata(datum):
-            #     metadata[datum.id] = new_metadata
-            metadata[datum.id] = resolve_mdata(datum)
+            if new_metadata := resolve_mdata(datum):
+                metadata[datum.id] = new_metadata
+            # metadata[datum.id] = resolve_mdata(datum)
 
         if not metadata: 
             exit_with("No metadata resolved - nothing to apply!")
