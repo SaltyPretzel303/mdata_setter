@@ -61,4 +61,4 @@
     image: python:3.10
     environment: ec2-instance
     command: 
-      - echo "yo from print-step"
+      - echo "yo from print-step after the update"
