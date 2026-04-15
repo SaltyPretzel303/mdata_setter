@@ -55,3 +55,10 @@
         description: |
           Here you can define the metadata that will be associated with the passed datum. 
           Checkout the description of `filter` paramtere for available properties of passed `datum` object.
+
+- step: 
+    name: print-step
+    image: python:3.10
+    environment: ec2-instance
+    command: 
+      - echo "yo from print-step"
