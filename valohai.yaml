@@ -62,3 +62,4 @@
     environment: ec2-instance
     command: 
       - echo "yo from print-step after the SECOND update"
+      - echo "change 1"
